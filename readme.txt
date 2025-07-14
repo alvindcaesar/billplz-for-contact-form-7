@@ -4,9 +4,9 @@ Author URI: https://alvindcaesar.com
 Plugin URI: https://github.com/alvindcaesar/billplz-for-contact-form-7
 Tags: e-commerce, payment-gateway, product, subscription, payment-forms
 Requires at least: 5.5
-Tested up to: 6.4.2
+Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GNU Version 2 or Any Later Version
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,9 @@ Payments are processed offsite at [Billplz](https://billplz.com) and the custome
 > 4. That's it. You are now ready to start accepting Billplz payment on your website through your contact form.
 
 == Changelog ==
+
+= 1.2.1 - July 14, 2025 =
+* Security: Fixed XSS vulnerability in admin area payment table links.
 
 = 1.2 - March 30, 2023 =
 * New: Added option to send email confirmation on payment success.

@@ -173,11 +173,11 @@ class PaymentTable extends WP_List_Table {
 		$pending   = $this->get_status_count( 'pending' );
 
 		$status_links = array(
-			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . remove_query_arg( 'status' ) . "'>All <span class='count'>(" . ( $completed + $pending ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
+			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . esc_url( remove_query_arg( 'status' ) ) . "'>All <span class='count'>(" . ( $completed + $pending ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
-			'completed' => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'completed' ) ) ? 'current' : '' ) . "' href='" . add_query_arg( 'status', 'completed' ) . "'>Completed <span class='count'>(" . $completed . ')</span></a>', BCF7_TEXT_DOMAIN ),
+			'completed' => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'completed' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'completed' ) ) . "'>Completed <span class='count'>(" . $completed . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
-			'pending'   => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'pending' ) ) ? 'current' : '' ) . "' href='" . add_query_arg( 'status', 'pending' ) . "'>Pending <span class='count'>(" . $pending . ')</span></a>', BCF7_TEXT_DOMAIN ),
+			'pending'   => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'pending' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'pending' ) ) . "'>Pending <span class='count'>(" . $pending . ')</span></a>', BCF7_TEXT_DOMAIN ),
 		);
 		return $status_links;
 	}
