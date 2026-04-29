@@ -28,15 +28,16 @@ class ProcessRedirect
     }
 
     $payment_id = absint($_GET['payment-id']);
+    $bill_id    = isset($_GET['billplz']['id']) ? sanitize_text_field($_GET['billplz']['id']) : '';
 
-    if (! $payment_id) {
+    if (! $payment_id || '' === $bill_id) {
       return '';
     }
 
     global $wpdb;
 
     $table_name = $wpdb->prefix . "bcf7_payment";
-    $data = $wpdb->get_row($wpdb->prepare("SELECT name, email, transaction_id, bill_url, status FROM {$table_name} WHERE id = %d", $payment_id), ARRAY_A);
+    $data = $wpdb->get_row($wpdb->prepare("SELECT name, email, transaction_id, bill_url, status FROM {$table_name} WHERE id = %d AND transaction_id = %s", $payment_id, $bill_id), ARRAY_A);
 
     if (! $data) {
       return '<p>' . esc_html__('Payment record not found.', BCF7_TEXT_DOMAIN) . '</p>';

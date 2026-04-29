@@ -84,7 +84,7 @@ class CallbackHandler
       return;
     }
 
-    if ('true' === $query_params['paid'] && ! $this->paid_amount_matches($payment_id, $query_params)) {
+    if ('true' === $query_params['paid'] && ! $this->paid_amount_matches($payment_id, sanitize_text_field($query_params['id']), $query_params)) {
       return;
     }
 
@@ -96,9 +96,9 @@ class CallbackHandler
     );
   }
 
-  private function paid_amount_matches($payment_id, $query_params)
+  private function paid_amount_matches($payment_id, $transaction_id, $query_params)
   {
-    $payment = $this->get_payment($payment_id);
+    $payment = $this->get_payment($payment_id, $transaction_id);
 
     if (! $payment) {
       return false;
@@ -185,7 +185,7 @@ class CallbackHandler
       return false;
     }
 
-    $payment = $this->get_payment($payment_id);
+    $payment = $this->get_payment($payment_id, $transaction_id);
 
     if (! $payment) {
       return false;
@@ -199,12 +199,12 @@ class CallbackHandler
     if ('true' === $paid) {
       $updated = $wpdb->query(
         $wpdb->prepare(
-          "UPDATE {$table_name} SET status = %s, transaction_id = %s, paid_at = %s, bill_url = %s WHERE id = %d AND status != %s",
+          "UPDATE {$table_name} SET status = %s, paid_at = %s, bill_url = %s WHERE id = %d AND transaction_id = %s AND status != %s",
           'completed',
-          $transaction_id,
           $paid_at,
           $bill_url,
           $payment_id,
+          $transaction_id,
           'completed'
         )
       );
@@ -228,21 +228,31 @@ class CallbackHandler
 
     $wpdb->query(
       $wpdb->prepare(
-        "UPDATE {$table_name} SET transaction_id = %s, paid_at = NULL, bill_url = %s WHERE id = %d",
-        $transaction_id,
+        "UPDATE {$table_name} SET paid_at = NULL, bill_url = %s WHERE id = %d AND transaction_id = %s",
         $bill_url,
-        $payment_id
+        $payment_id,
+        $transaction_id
       )
     );
 
     return true;
   }
 
-  private function get_payment($payment_id)
+  private function get_payment($payment_id, $transaction_id = null)
   {
     global $wpdb;
 
     $table_name = $wpdb->prefix . "bcf7_payment";
+
+    if (null !== $transaction_id) {
+      return $wpdb->get_row(
+        $wpdb->prepare(
+          "SELECT name, email, amount, status FROM {$table_name} WHERE id = %d AND transaction_id = %s",
+          $payment_id,
+          $transaction_id
+        )
+      );
+    }
 
     return $wpdb->get_row($wpdb->prepare("SELECT name, email, amount, status FROM {$table_name} WHERE id = %d", $payment_id));
   }
