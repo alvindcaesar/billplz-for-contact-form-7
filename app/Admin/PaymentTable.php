@@ -171,20 +171,23 @@ class PaymentTable extends WP_List_Table {
 	protected function get_views() {
 		$completed = $this->get_status_count( 'completed' );
 		$pending   = $this->get_status_count( 'pending' );
+		$failed    = $this->get_status_count( 'failed' );
 
 		$status_links = array(
-			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . esc_url( remove_query_arg( 'status' ) ) . "'>All <span class='count'>(" . ( $completed + $pending ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
+			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . esc_url( remove_query_arg( 'status' ) ) . "'>All <span class='count'>(" . ( $completed + $pending + $failed ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
 			'completed' => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'completed' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'completed' ) ) . "'>Completed <span class='count'>(" . $completed . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
 			'pending'   => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'pending' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'pending' ) ) . "'>Pending <span class='count'>(" . $pending . ')</span></a>', BCF7_TEXT_DOMAIN ),
+
+			'failed'    => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'failed' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'failed' ) ) . "'>Failed <span class='count'>(" . $failed . ')</span></a>', BCF7_TEXT_DOMAIN ),
 		);
 		return $status_links;
 	}
 
 	public function get_status_count( $status ) {
 		global $wpdb;
-		$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$this->get_db_name()} WHERE status = '$status'" );
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->get_db_name()} WHERE status = %s", $status ) );
 		return $count;
 	}
 }
