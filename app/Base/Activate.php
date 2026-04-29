@@ -82,11 +82,14 @@ class Activate {
 		$query = new WP_Query( $args );
 
 		if ( $query->have_posts() ) {
+			$form_id = (int) $query->posts[0]->ID;
 			wp_reset_postdata();
-			return null;
+			$this->save_form_id($form_id);
+			return $form_id;
 		} else {
 			$form_id = $this->insert_form($form_title, $form_content);
 			$this->add_form_meta($form_id);
+			$this->save_form_id($form_id);
 			return $form_id;
 		}
 	}
@@ -138,6 +141,41 @@ class Activate {
             );
             add_option('bcf7_general_settings', $options);
         }
+    }
+
+    /**
+     * Method to save the example payment form ID in the options table.
+     *
+     * @param int $form_id The ID of the form.
+     *
+     * @return void
+     */
+    private function save_form_id($form_id) {
+        if (empty($form_id)) {
+            return;
+        }
+
+        $options = get_option('bcf7_general_settings');
+
+        if (! is_array($options)) {
+            $options = array(
+                'bcf7_mode'          => '1',
+                'bcf7_form_select'   => array($form_id),
+                'bcf7_redirect_page' => '',
+            );
+
+            add_option('bcf7_general_settings', $options);
+            return;
+        }
+
+        $selected_forms = isset($options['bcf7_form_select']) ? array_filter(array_map('intval', (array) $options['bcf7_form_select'])) : array();
+
+        if (! empty($selected_forms)) {
+            return;
+        }
+
+        $options['bcf7_form_select'] = array($form_id);
+        update_option('bcf7_general_settings', $options);
     }
 
     /**
