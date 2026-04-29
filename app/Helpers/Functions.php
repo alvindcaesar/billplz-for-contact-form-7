@@ -16,13 +16,17 @@ class Functions
 
   public function general_option($key = '', $default = false)
   {
-    $value = !empty(get_option('bcf7_general_settings')[$key]) ? get_option('bcf7_general_settings')[$key] : $default;
+    $options = get_option('bcf7_general_settings', array());
+    $value = (is_array($options) && array_key_exists($key, $options) && '' !== $options[$key]) ? $options[$key] : $default;
+
     return $value;
   }
 
   public function api_option($key = '', $default = false)
   {
-    $value = !empty(get_option('bcf7_api_options')[$key]) ? get_option('bcf7_api_options')[$key] : $default;
+    $options = get_option('bcf7_api_options', array());
+    $value = (is_array($options) && array_key_exists($key, $options) && '' !== $options[$key]) ? $options[$key] : $default;
+
     return $value;
   }
 
@@ -44,8 +48,8 @@ class Functions
 
   public function get_api_key()
   {
-    $live    = base64_encode($this->api_option("bcf7_live_secret_key"));
-    $sandbox = base64_encode($this->api_option("bcf7_sandbox_secret_key"));
+    $live    = base64_encode($this->api_option("bcf7_live_secret_key") . ':');
+    $sandbox = base64_encode($this->api_option("bcf7_sandbox_secret_key") . ':');
 
     $api_key = ("Live" == $this->get_mode()) ? $live : $sandbox;
 

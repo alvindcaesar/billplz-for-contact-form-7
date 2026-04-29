@@ -18,7 +18,9 @@ class General
 
   public function init()
   {
-    register_setting("bcf7_general", "bcf7_general_settings");
+    register_setting("bcf7_general", "bcf7_general_settings", array(
+      'sanitize_callback' => array($this, 'sanitize_options'),
+    ));
 
     add_settings_section(
       "bcf7_general_section",
@@ -59,6 +61,23 @@ class General
         "label_for" => "bcf7_redirect_page"
       )
     );
+  }
+
+  public function sanitize_options($input)
+  {
+    if (! is_array($input)) {
+      return array();
+    }
+
+    $clean = array();
+    $clean['bcf7_mode'] = (isset($input['bcf7_mode']) && '1' === (string) $input['bcf7_mode']) ? '1' : '';
+
+    $forms = isset($input['bcf7_form_select']) ? (array) $input['bcf7_form_select'] : array();
+    $clean['bcf7_form_select'] = array_values(array_filter(array_map('absint', $forms)));
+
+    $clean['bcf7_redirect_page'] = isset($input['bcf7_redirect_page']) ? absint($input['bcf7_redirect_page']) : 0;
+
+    return $clean;
   }
 
   public function mode_callback()
