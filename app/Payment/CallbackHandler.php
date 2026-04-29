@@ -226,14 +226,13 @@ class CallbackHandler
       return true;
     }
 
-    $wpdb->update(
-      $table_name,
-      array(
-        'transaction_id' => $transaction_id,
-        'paid_at' => null,
-        'bill_url' => $bill_url
-      ),
-      array('id' => $payment_id)
+    $wpdb->query(
+      $wpdb->prepare(
+        "UPDATE {$table_name} SET transaction_id = %s, paid_at = NULL, bill_url = %s WHERE id = %d",
+        $transaction_id,
+        $bill_url,
+        $payment_id
+      )
     );
 
     return true;

@@ -123,7 +123,6 @@ class FormSubmission
         'mode'           => $mode,
         'status'         => $status,
         'created_at'     => current_time('mysql'),
-        'paid_at'        => null,
       ),
     );
 
