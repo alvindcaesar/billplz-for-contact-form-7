@@ -14,23 +14,30 @@ class Email
   public function register()
   {
     add_action('admin_init', array($this, "init"));
-    add_filter('pre_update_option_bcf7_email_settings', array($this, 'update_email_permission'));
   }
 
-  public function update_email_permission($new_value)
+  public function sanitize_options($input)
   {
-    if (!isset($new_value['bcf7_email_permission'])) {
-      $new_value['bcf7_email_permission'] = '';
+    if (! is_array($input)) {
+      return array();
     }
 
-    return $new_value;
+    $clean = array();
+    $clean['bcf7_email_permission'] = (isset($input['bcf7_email_permission']) && '1' === (string) $input['bcf7_email_permission']) ? '1' : '';
+    $clean['bcf7_email_subject'] = isset($input['bcf7_email_subject']) ? sanitize_text_field($input['bcf7_email_subject']) : '';
+    $clean['bcf7_email_body'] = isset($input['bcf7_email_body']) ? wp_kses_post($input['bcf7_email_body']) : '';
+
+    return $clean;
   }
 
   public function init()
   {
     register_setting(
       'bcf7_email',
-      'bcf7_email_settings'
+      'bcf7_email_settings',
+      array(
+        'sanitize_callback' => array($this, 'sanitize_options'),
+      )
     );
 
     add_settings_section(
