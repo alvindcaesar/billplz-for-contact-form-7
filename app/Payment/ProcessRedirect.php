@@ -23,6 +23,10 @@ class ProcessRedirect
       return '';
     }
 
+    if (! $this->verify_redirect_signature()) {
+      return '<p>' . esc_html__('Invalid or expired payment confirmation link.', BCF7_TEXT_DOMAIN) . '</p>';
+    }
+
     $payment_id = absint($_GET['payment-id']);
 
     if (! $payment_id) {
@@ -77,5 +81,40 @@ class ProcessRedirect
     }
 
     return ob_get_clean();
+  }
+
+  private function verify_redirect_signature()
+  {
+    $raw = isset($_SERVER['QUERY_STRING']) ? html_entity_decode((string) $_SERVER['QUERY_STRING']) : '';
+    parse_str($raw, $query);
+
+    if (empty($query['billplz']) || ! is_array($query['billplz']) || empty($query['billplz']['x_signature'])) {
+      return false;
+    }
+
+    $supplied = (string) $query['billplz']['x_signature'];
+
+    unset($query['billplz']['x_signature']);
+    unset($query['payment-id']);
+    unset($query['bcf7-listener']);
+    unset($query['page_id']);
+
+    $parts = array();
+
+    foreach ($query as $key => $value) {
+      if (is_array($value)) {
+        foreach ($value as $sub_key => $sub_val) {
+          if (is_scalar($sub_val)) {
+            $parts[] = $key . $sub_key . $sub_val;
+          }
+        }
+      }
+    }
+
+    sort($parts);
+
+    $expected = hash_hmac('sha256', implode('|', $parts), $this->helpers->get_xsignature());
+
+    return hash_equals($expected, $supplied);
   }
 }

@@ -84,12 +84,30 @@ class CallbackHandler
       return;
     }
 
+    if ('true' === $query_params['paid'] && ! $this->paid_amount_matches($payment_id, $query_params)) {
+      return;
+    }
+
     $this->handle_payment_update(
       $payment_id,
       sanitize_text_field($query_params['id']),
       sanitize_text_field($query_params['paid']),
       isset($query_params['paid_at']) ? sanitize_text_field($query_params['paid_at']) : ''
     );
+  }
+
+  private function paid_amount_matches($payment_id, $query_params)
+  {
+    $payment = $this->get_payment($payment_id);
+
+    if (! $payment) {
+      return false;
+    }
+
+    $expected_cents = (int) round(((float) $payment->amount) * 100);
+    $reported_cents = isset($query_params['paid_amount']) ? (int) $query_params['paid_amount'] : 0;
+
+    return $expected_cents > 0 && $expected_cents === $reported_cents;
   }
 
   private function is_billplz_listener()
@@ -212,7 +230,7 @@ class CallbackHandler
       $table_name,
       array(
         'transaction_id' => $transaction_id,
-        'paid_at' => '0000-00-00 00:00:00',
+        'paid_at' => null,
         'bill_url' => $bill_url
       ),
       array('id' => $payment_id)
