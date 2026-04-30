@@ -13,11 +13,29 @@ Payments are processed offsite at [Billplz](https://billplz.com) and the custome
 
 ### Changelog
 
-#### 1.2.0 - January 07, 2024
-* New: Added the option to send email confirmation on payment success.
-* New: Enabled the ability to select multiple forms as payment forms.
-* New: Introduced the new `bcf7_payment_success` action hook.
-* Improvement: Refactored codebase for better organization.
+#### 1.3.0 - April 29, 2026
+* New: Failed payments now appear in the payments admin tab and have their own Failed view filter.
+* New: The example payment form created on activation is automatically selected as the active payment form.
+* Security: Verified Billplz signature inside the payment confirmation shortcode so crafted URLs can no longer expose another payer's details.
+* Security: Required a capability check and bulk-action nonce on the payments admin table before deleting or marking entries completed.
+* Security: Escaped the transaction ID link in the payments admin table.
+* Security: Verified the paid amount reported by Billplz against the recorded bill before marking a payment completed.
+* Security: Sanitized API, general, and email settings on save, including X-Signature key and email body input.
+* Security: Hardened the credentials notice to escape its admin URL and run a capability check.
+* Improvement: Payment redirect now works with Contact Form 7's Ajax submission flow.
+* Improvement: Billplz callback completion is now idempotent, so repeated callbacks cannot reprocess the same payment.
+* Improvement: Confirmation email now sends as HTML with the correct Content-Type header and escapes transaction placeholders.
+* Improvement: Payments admin table now uses the site timezone for the Submitted and Paid columns.
+* Fix: Stopped writing the 0000-00-00 zero datetime to paid_at, which failed under MySQL strict mode.
+* Compatibility: Tested up to WordPress 6.9.
+
+#### 1.2.1 - July 14, 2025
+* Security: Fixed XSS vulnerability in admin area payment table links.
+
+#### 1.2 - March 30, 2023
+* New: Added option to send email confirmation on payment success.
+* New: Added ability to select multiple forms as payment forms.
+* Improvement: Codebase refactoring for better organization.
 
 #### 1.0.2 - December 24, 2022
 * New: Display current mode status (Live / Test) on the dashboard's admin bar.
