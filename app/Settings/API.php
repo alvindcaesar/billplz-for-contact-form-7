@@ -15,7 +15,9 @@ class API {
 	}
 
 	public function init() {
-		register_setting( 'bcf7_api', 'bcf7_api_options' );
+		register_setting( 'bcf7_api', 'bcf7_api_options', array(
+			'sanitize_callback' => array( $this, 'sanitize_options' ),
+		) );
 
 		add_settings_section(
 			'bcf7_live_section',
@@ -110,6 +112,28 @@ class API {
 		?>
 	<input class="regular-text" type="text" name="bcf7_api_options[bcf7_sandbox_collection_id]" id="bcf7_sandbox_collection_id" value="<?php echo esc_attr( isset( self::$options['bcf7_sandbox_collection_id'] ) ? self::$options['bcf7_sandbox_collection_id'] : '' ); ?>">
 		<?php
+	}
+
+	public function sanitize_options( $input ) {
+		if ( ! is_array( $input ) ) {
+			return array();
+		}
+
+		$keys = array(
+			'bcf7_live_secret_key',
+			'bcf7_live_collection_id',
+			'bcf7_live_xsignature_key',
+			'bcf7_sandbox_secret_key',
+			'bcf7_sandbox_collection_id',
+			'bcf7_sandbox_xsignature_key',
+		);
+
+		$clean = array();
+		foreach ( $keys as $key ) {
+			$clean[ $key ] = isset( $input[ $key ] ) ? sanitize_text_field( $input[ $key ] ) : '';
+		}
+
+		return $clean;
 	}
 
 	public function sandbox_xsignature_callback() {

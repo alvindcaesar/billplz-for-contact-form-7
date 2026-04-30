@@ -9,6 +9,14 @@ class PaymentTable extends WP_List_Table {
 	// Define $table_data property
 	private $table_data;
 
+	public function __construct() {
+		parent::__construct( array(
+			'singular' => 'bcf7_payment',
+			'plural'   => 'bcf7_payments',
+			'ajax'     => false,
+		) );
+	}
+
 	// The database table name
 	private function get_db_name() {
 		global $wpdb;
@@ -42,9 +50,13 @@ class PaymentTable extends WP_List_Table {
 					'customer'       => $payment_data['name'],
 					'form'           => $payment_data['form_title'] . ' (ID: ' . $payment_data['form_id'] . ')',
 					'amount'         => $payment_data['amount'],
-					'transaction_id' => '<a href=' . $payment_data['bill_url'] . " target='_blank'>" . $payment_data['transaction_id'] . '</a>',
-					'created_at'     => nl2br( "Submitted on \n " . date( 'F j, Y \a\t\ g:i a', strtotime( $payment_data['created_at'] ) ) . ' ' ),
-					'paid_at'        => ( '0000-00-00 00:00:00' != $payment_data['paid_at'] ) ? ( nl2br( "Paid on \n " . date( 'F j, Y \a\t\ g:i a', strtotime( $payment_data['paid_at'] ) ) . ' ' ) ) : '-',
+					'transaction_id' => sprintf(
+						'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+						esc_url( $payment_data['bill_url'] ),
+						esc_html( $payment_data['transaction_id'] )
+					),
+					'created_at'     => nl2br( "Submitted on \n " . wp_date( 'F j, Y \a\t\ g:i a', strtotime( $payment_data['created_at'] ) ) . ' ' ),
+					'paid_at'        => ( ! empty( $payment_data['paid_at'] ) && '0000-00-00 00:00:00' !== $payment_data['paid_at'] ) ? nl2br( "Paid on \n " . wp_date( 'F j, Y \a\t\ g:i a', strtotime( $payment_data['paid_at'] ) ) . ' ' ) : '-',
 					'status'         => ucfirst( $payment_data['status'] ),
 				);
 			}
@@ -136,31 +148,39 @@ class PaymentTable extends WP_List_Table {
 	public function process_bulk_action() {
 		$action = $this->current_action();
 
-		if ( 'delete' === $action ) {
-			$list_ids = map_deep( $_POST['payment_id'], 'sanitize_text_field' );
+		if ( 'delete' !== $action && 'mark_as_completed' !== $action ) {
+			return;
+		}
 
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to manage payments.', BCF7_TEXT_DOMAIN ) );
+		}
+
+		check_admin_referer( 'bulk-' . $this->_args['plural'] );
+
+		$raw_ids  = isset( $_POST['payment_id'] ) ? (array) $_POST['payment_id'] : array();
+		$list_ids = array_values( array_filter( array_map( 'absint', $raw_ids ) ) );
+
+		if ( empty( $list_ids ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		if ( 'delete' === $action ) {
 			foreach ( $list_ids as $id ) {
-				global $wpdb;
-				$sql = $wpdb->prepare( "DELETE FROM {$this->get_db_name()} WHERE id= %d", array( $id ) );
-				$wpdb->query( $sql );
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$this->get_db_name()} WHERE id = %d", $id ) );
 			}
 			$text = ( count( $list_ids ) > 1 ) ? 'payments' : 'payment';
-
 			add_action( 'admin_notices', $this->bulk_action_notice( count( $list_ids ), $text, 'deleted' ) );
-			$this->table_data;
 		}
 
 		if ( 'mark_as_completed' === $action ) {
-			$list_ids = map_deep( $_POST['payment_id'], 'sanitize_text_field' );
-
 			foreach ( $list_ids as $id ) {
-				global $wpdb;
-				$wpdb->update( $this->get_db_name(), array( 'status' => 'completed' ), array( 'ID' => $id ) );
+				$wpdb->update( $this->get_db_name(), array( 'status' => 'completed' ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
 			}
-
 			$text = ( count( $list_ids ) > 1 ) ? 'payments' : 'payment';
 			add_action( 'admin_notices', $this->bulk_action_notice( count( $list_ids ), $text, 'updated' ) );
-			$this->table_data;
 		}
 	}
 
@@ -171,20 +191,23 @@ class PaymentTable extends WP_List_Table {
 	protected function get_views() {
 		$completed = $this->get_status_count( 'completed' );
 		$pending   = $this->get_status_count( 'pending' );
+		$failed    = $this->get_status_count( 'failed' );
 
 		$status_links = array(
-			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . esc_url( remove_query_arg( 'status' ) ) . "'>All <span class='count'>(" . ( $completed + $pending ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
+			'all'       => __( "<a class='" . ( ( ! isset( $_GET['status'] ) ) ? 'current' : '' ) . "' href='" . esc_url( remove_query_arg( 'status' ) ) . "'>All <span class='count'>(" . ( $completed + $pending + $failed ) . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
 			'completed' => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'completed' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'completed' ) ) . "'>Completed <span class='count'>(" . $completed . ')</span></a>', BCF7_TEXT_DOMAIN ),
 
 			'pending'   => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'pending' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'pending' ) ) . "'>Pending <span class='count'>(" . $pending . ')</span></a>', BCF7_TEXT_DOMAIN ),
+
+			'failed'    => __( "<a class='" . ( ( isset( $_GET['status'] ) && ( $_GET['status'] == 'failed' ) ) ? 'current' : '' ) . "' href='" . esc_url( add_query_arg( 'status', 'failed' ) ) . "'>Failed <span class='count'>(" . $failed . ')</span></a>', BCF7_TEXT_DOMAIN ),
 		);
 		return $status_links;
 	}
 
 	public function get_status_count( $status ) {
 		global $wpdb;
-		$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$this->get_db_name()} WHERE status = '$status'" );
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->get_db_name()} WHERE status = %s", $status ) );
 		return $count;
 	}
 }

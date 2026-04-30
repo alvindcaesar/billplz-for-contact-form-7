@@ -8,8 +8,8 @@
  * Author URI:      https://alvindcaesar.com
  * Text Domain:     billplz-for-cf7
  * Domain Path:     /languages
- * Version:         1.2.1
- * License: GPL v2 or later
+ * Version:         1.3.0
+ * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
  * @package         Billplz_For_CF7
@@ -26,7 +26,7 @@ define("BCF7_PLUGIN_URL", plugin_dir_url(__FILE__));
 define("BCF7_PLUGIN_FILE", plugin_basename(__FILE__));
 define("BCF7_ASSETS_URL", plugins_url('/billplz-for-contact-form-7/assets/'));
 define("BCF7_TEXT_DOMAIN", "billplz-for-cf7");
-define("BCF7_PLUGIN_VERSION", "1.2.1");
+define("BCF7_PLUGIN_VERSION", "1.3.0");
 
 if (class_exists('BillplzCF7\\Init')) {
   BillplzCF7\Init::register_services();
