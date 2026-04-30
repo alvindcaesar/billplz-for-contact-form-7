@@ -7,7 +7,7 @@ Requires at least: 5.5
 Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 1.3.0
-License: GNU Version 2 or Any Later Version
+License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Integrates Billplz with Contact Form 7. Start accepting payment with Contact Form 7 & Billplz today.
